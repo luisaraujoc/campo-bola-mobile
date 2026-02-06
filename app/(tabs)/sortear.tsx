@@ -53,6 +53,7 @@ export default function SortearScreen() {
             return;
         }
 
+        // Garante que o modo de sorteio seja passado corretamente
         const teams = sortTeams(selectedPlayers, "balanced");
         setGeneratedTeams(teams);
         setStep('result');
@@ -64,8 +65,15 @@ export default function SortearScreen() {
     };
 
     const handleStartMatch = () => {
-        if (generatedTeams.length < 2) return;
+        // Agora aceitamos iniciar mesmo que tenha mais de 2 times (o resto vai pra fila)
+        if (generatedTeams.length < 2) {
+            Alert.alert("Ops", "Precisa de pelo menos 2 times!");
+            return;
+        }
+
+        // Manda TODOS os times (0 e 1 jogam, 2+ esperam)
         startMatch(generatedTeams);
+
         router.push('/game');
     };
 
@@ -102,7 +110,7 @@ export default function SortearScreen() {
                     )}
                 </View>
 
-                {/* --- MODO SELEÇÃO (Vertical e Grande) --- */}
+                {/* --- MODO SELEÇÃO --- */}
                 {step === 'selection' && (
                     <>
                         <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
@@ -114,22 +122,35 @@ export default function SortearScreen() {
                                             key={player.id}
                                             onPress={() => toggleSelection(player.id)}
                                             activeOpacity={0.7}
-                                            className={`w-full p-4 rounded-xl border flex-row items-center justify-between ${
-                                                isSelected
-                                                    ? 'bg-green-50 border-green-500 shadow-sm'
-                                                    : 'bg-white border-gray-200'
-                                            }`}
+                                            // AQUI ESTAVA O ERRO: Simplificamos para usar style inline na cor de fundo
+                                            className="w-full p-4 rounded-xl border flex-row items-center justify-between"
+                                            style={{
+                                                backgroundColor: isSelected ? '#f0fdf4' : '#ffffff', // green-50 ou white
+                                                borderColor: isSelected ? '#22c55e' : '#e5e7eb',     // green-500 ou gray-200
+                                            }}
                                         >
                                             <View className="flex-row items-center gap-4">
-                                                {/* Checkbox Visual Grande */}
-                                                <View className={`w-8 h-8 rounded-full border-2 items-center justify-center ${
-                                                    isSelected ? 'bg-green-500 border-green-500' : 'border-gray-300 bg-gray-50'
-                                                }`}>
+                                                {/* Checkbox Visual - CORRIGIDO: Style inline para evitar crash do NativeWind */}
+                                                <View
+                                                    style={{
+                                                        width: 32,
+                                                        height: 32,
+                                                        borderRadius: 16,
+                                                        borderWidth: 2,
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        backgroundColor: isSelected ? '#22c55e' : '#f9fafb',
+                                                        borderColor: isSelected ? '#22c55e' : '#d1d5db'
+                                                    }}
+                                                >
                                                     {isSelected && <MaterialCommunityIcons name="check" size={20} color="white" />}
                                                 </View>
 
                                                 <View>
-                                                    <Text className={`text-lg font-bold ${isSelected ? 'text-green-900' : 'text-gray-800'}`}>
+                                                    <Text
+                                                        className="text-lg font-bold"
+                                                        style={{ color: isSelected ? '#14532d' : '#1f2937' }}
+                                                    >
                                                         {player.name}
                                                     </Text>
                                                     <Text className="text-sm text-gray-500">
@@ -138,9 +159,8 @@ export default function SortearScreen() {
                                                 </View>
                                             </View>
 
-                                            {/* Ícone de Posição (Opcional) */}
                                             <MaterialCommunityIcons
-                                                name={player.position?.includes('Goleiro') ? 'hand-back-left' : 'soccer'}
+                                                name={player.position?.toLowerCase().includes('goleiro') ? 'hand-back-left' : 'soccer'}
                                                 size={24}
                                                 color={isSelected ? '#15803d' : '#9ca3af'}
                                                 style={{ opacity: 0.5 }}
@@ -151,7 +171,7 @@ export default function SortearScreen() {
                             </View>
                         </ScrollView>
 
-                        {/* Botão Flutuante Grande */}
+                        {/* Botão Flutuante */}
                         <View className="absolute bottom-4 left-4 right-4">
                             <TouchableOpacity
                                 onPress={handleSort}
@@ -164,7 +184,7 @@ export default function SortearScreen() {
                     </>
                 )}
 
-                {/* --- MODO RESULTADO (Mantido igual) --- */}
+                {/* --- MODO RESULTADO --- */}
                 {step === 'result' && (
                     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
                         {generatedTeams.map((team) => (
