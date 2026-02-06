@@ -200,15 +200,3 @@ const addGoal = (teamIndex: 0 | 1, playerId: string, assistPlayerId?: string) =>
 }
 
 ```
-
----
-
-## 📝 Resumo de Endpoints Backend Sugeridos
-
-Baseado nessas regras, o Backend precisará das seguintes rotas/lógicas:
-
-1. `POST /matches/start`: Recebe lista de times, inicia fila.
-2. `POST /matches/goal`: Registra gol (Autor + Assistência). Valida se chegou a 2 gols.
-3. `POST /matches/guest`: Adiciona um jogador de outro time como convidado na partida atual.
-4. `POST /matches/finish`: Finaliza partida, salva histórico.
-5. `POST /matches/rotate` **(Crítico)**: Executa a lógica do item 3 (Fila) e item 5 (Conflito de Complete), retornando o novo estado da fila e alertas de jogadores removidos.
