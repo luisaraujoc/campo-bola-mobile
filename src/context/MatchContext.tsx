@@ -11,6 +11,7 @@ interface MatchState {
     goals: Goal[];
     guestPlayersA: Player[];
     guestPlayersB: Player[];
+    isSessionActive: boolean;
 }
 
 interface MatchContextData {
@@ -18,11 +19,11 @@ interface MatchContextData {
     startMatch: (allTeams: Team[]) => void;
     pauseMatch: () => void;
     resumeMatch: () => void;
-    // ATENÇÃO: Nova assinatura da função addGoal
     addGoal: (teamIndex: 0 | 1, playerId: string, assistPlayerId?: string) => void;
     finishMatch: () => Promise<void>;
     addGuestPlayer: (teamIndex: 0 | 1, player: Player) => void;
-    nextMatch: () => string[];
+    nextMatch: (drawWinnerId?: string) => string[]; // <-- Atualizado para receber vencedor do sorteio
+    finishDay: () => void;
 }
 
 const MatchContext = createContext<MatchContextData>({} as MatchContextData);
@@ -37,9 +38,10 @@ export function MatchProvider({ children }: { children: ReactNode }) {
         goals: [],
         guestPlayersA: [],
         guestPlayersB: [],
+        isSessionActive: false,
     });
 
-    // Cronômetro (Mantido igual)
+    // Cronômetro Regressivo
     useEffect(() => {
         let interval: NodeJS.Timeout;
         if (matchState.isRunning && matchState.gameTime > 0) {
@@ -66,13 +68,13 @@ export function MatchProvider({ children }: { children: ReactNode }) {
             goals: [],
             guestPlayersA: [],
             guestPlayersB: [],
+            isSessionActive: true,
         });
     };
 
     const pauseMatch = () => setMatchState(prev => ({ ...prev, isRunning: false }));
     const resumeMatch = () => setMatchState(prev => ({ ...prev, isRunning: true }));
 
-    // ATUALIZADO: Recebe assistPlayerId
     const addGoal = (teamIndex: 0 | 1, playerId: string, assistPlayerId?: string) => {
         setMatchState(prev => {
             const newScoreA = teamIndex === 0 ? prev.scoreA + 1 : prev.scoreA;
@@ -81,10 +83,11 @@ export function MatchProvider({ children }: { children: ReactNode }) {
             const newGoal: Goal = {
                 id: Math.random().toString(),
                 playerId,
-                assistPlayerId, // Salva a assistência aqui!
+                assistPlayerId,
                 minute: Math.floor((360 - prev.gameTime) / 60),
             };
 
+            // Regra dos 2 Gols (Misericórdia)
             const isFinished = newScoreA >= 2 || newScoreB >= 2;
 
             return {
@@ -105,10 +108,15 @@ export function MatchProvider({ children }: { children: ReactNode }) {
         }));
     };
 
+    // Salva no Banco de Dados (SQLite)
     const finishMatch = async () => {
         setMatchState(prev => ({ ...prev, isRunning: false }));
+
+        // Evita salvar partidas vazias ou duplicadas se o usuário clicar várias vezes
+        // (Pode adicionar validações extras aqui se necessário)
+
         const finalMatch: Match = {
-            id: Math.random().toString(),
+            id: Math.random().toString(), // Será substituído por UUID no service
             teamA: matchState.teams[0],
             teamB: matchState.teams[1],
             scoreA: matchState.scoreA,
@@ -120,22 +128,48 @@ export function MatchProvider({ children }: { children: ReactNode }) {
         await matchService.create(finalMatch);
     };
 
-    const nextMatch = (): string[] => {
+    // Lógica da Rotação de Times (O Cérebro do Baba)
+    const nextMatch = (drawWinnerId?: string): string[] => {
         let removedPlayerNames: string[] = [];
+
         setMatchState(prev => {
             const teams = [...prev.teams];
-            const winnerIndex = prev.scoreA >= prev.scoreB ? 0 : 1;
+
+            // 1. Determina o Vencedor
+            let winnerIndex = 0; // Padrão: Rei da Mesa (Time A/0) fica no empate
+
+            if (drawWinnerId) {
+                // Se veio ID do sorteio, ele é o vencedor
+                const foundIndex = teams.findIndex(t => t.id === drawWinnerId);
+                if (foundIndex !== -1) winnerIndex = foundIndex;
+            } else {
+                // Placar normal
+                if (prev.scoreA > prev.scoreB) winnerIndex = 0;
+                else if (prev.scoreB > prev.scoreA) winnerIndex = 1;
+                // Empate sem sorteio mantém o index 0 (Rei)
+            }
+
             const loserIndex = winnerIndex === 0 ? 1 : 0;
 
             const winnerTeam = teams[winnerIndex];
             const loserTeam = teams[loserIndex];
+
+            // 2. Manipula a Fila
             const waitingTeams = teams.slice(2);
 
+            // O Vencedor vai pro Index 0 (Rei)
+            // O Próximo da fila (Index 2) vai pro Index 1 (Desafiante)
+            // O Perdedor vai pro final da fila
             const newOrder = [winnerTeam, ...waitingTeams, loserTeam];
 
-            const winnerCurrentGuests = winnerIndex === 0 ? prev.guestPlayersA : prev.guestPlayersB;
-            const challengerRosterIds = newOrder[1].players.map(p => p.id);
+            // 3. Verifica Conflito de "Complete" (Guest Players)
+            const nextChallenger = newOrder[1]; // O time que vai jogar contra o vencedor
+            const challengerRosterIds = nextChallenger.players.map(p => p.id);
 
+            // Pega os convidados que estavam jogando no time vencedor
+            const winnerCurrentGuests = winnerIndex === 0 ? prev.guestPlayersA : prev.guestPlayersB;
+
+            // Remove convidados se eles pertencem ao time desafiante (conflito)
             const keptGuests = winnerCurrentGuests.filter(guest => !challengerRosterIds.includes(guest.id));
             const removedGuests = winnerCurrentGuests.filter(guest => challengerRosterIds.includes(guest.id));
 
@@ -149,15 +183,31 @@ export function MatchProvider({ children }: { children: ReactNode }) {
                 isRunning: false,
                 goals: [],
                 teams: newOrder,
-                guestPlayersA: keptGuests,
-                guestPlayersB: [],
+                guestPlayersA: keptGuests, // Mantém os que não deram conflito
+                guestPlayersB: [], // Desafiante entra limpo
+                isSessionActive: true
             };
         });
+
         return removedPlayerNames;
     };
 
+    const finishDay = () => {
+        setMatchState({
+            scoreA: 0,
+            scoreB: 0,
+            gameTime: 6 * 60,
+            isRunning: false,
+            teams: [],
+            goals: [],
+            guestPlayersA: [],
+            guestPlayersB: [],
+            isSessionActive: false,
+        });
+    };
+
     return (
-        <MatchContext.Provider value={{ matchState, startMatch, pauseMatch, resumeMatch, addGoal, finishMatch, addGuestPlayer, nextMatch }}>
+        <MatchContext.Provider value={{ matchState, startMatch, pauseMatch, resumeMatch, addGoal, finishMatch, addGuestPlayer, nextMatch, finishDay }}>
             {children}
         </MatchContext.Provider>
     );

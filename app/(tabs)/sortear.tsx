@@ -4,16 +4,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
-// Imports com Alias @
 import { playerService } from '@/services/playerService';
 import { Player, Team } from '@/types';
 import { sortTeams } from '@/lib/teamSorter';
 import { TeamList } from '@/components/TeamList';
 import { useMatch } from '@/context/MatchContext';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function SortearScreen() {
     const router = useRouter();
-    const { startMatch } = useMatch();
+    const { startMatch, finishDay, matchState } = useMatch();
+    const { activeTheme } = useTheme();
 
     const [players, setPlayers] = useState<Player[]>([]);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -39,21 +40,18 @@ export default function SortearScreen() {
 
     const toggleSelectAll = () => {
         if (selectedIds.length === players.length) {
-            setSelectedIds([]); // Desmarcar todos
+            setSelectedIds([]);
         } else {
-            setSelectedIds(players.map(p => p.id)); // Marcar todos
+            setSelectedIds(players.map(p => p.id));
         }
     };
 
     const handleSort = () => {
         const selectedPlayers = players.filter(p => selectedIds.includes(p.id));
-
         if (selectedPlayers.length < 2) {
             Alert.alert("Ops!", "Selecione pelo menos 2 jogadores para sortear.");
             return;
         }
-
-        // Garante que o modo de sorteio seja passado corretamente
         const teams = sortTeams(selectedPlayers, "balanced");
         setGeneratedTeams(teams);
         setStep('result');
@@ -65,151 +63,180 @@ export default function SortearScreen() {
     };
 
     const handleStartMatch = () => {
-        // Agora aceitamos iniciar mesmo que tenha mais de 2 times (o resto vai pra fila)
         if (generatedTeams.length < 2) {
             Alert.alert("Ops", "Precisa de pelo menos 2 times!");
             return;
         }
-
-        // Manda TODOS os times (0 e 1 jogam, 2+ esperam)
         startMatch(generatedTeams);
-
         router.push('/game');
     };
 
+    const handleFinishDay = () => {
+        Alert.alert(
+            "Finalizar o Baba?",
+            "Isso vai apagar os times sorteados e o placar atual.",
+            [
+                { text: "Cancelar", style: "cancel" },
+                {
+                    text: "Finalizar Tudo",
+                    style: "destructive",
+                    onPress: () => {
+                        finishDay();
+                        reset();
+                        Alert.alert("Baba Finalizado", "Tudo pronto para o próximo dia!");
+                    }
+                }
+            ]
+        );
+    };
+
     return (
-        <SafeAreaView className="flex-1 bg-gray-50">
+        <SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-950" edges={['top']}>
             <View className="flex-1 px-4 pt-4">
 
                 {/* Cabeçalho */}
                 <View className="mb-4 flex-row justify-between items-center">
                     <View>
-                        <Text className="text-2xl font-bold text-gray-900">
-                            {step === 'selection' ? 'Quem vai jogar?' : 'Resultado'}
+                        <Text className="text-2xl font-bold text-gray-900 dark:text-white">
+                            {matchState.isSessionActive ? 'Baba Rolando' : (step === 'selection' ? 'Quem vai jogar?' : 'Resultado')}
                         </Text>
-                        <Text className="text-gray-500">
-                            {step === 'selection'
-                                ? `${selectedIds.length} selecionados`
-                                : 'Times definidos'}
+                        <Text className="text-gray-500 dark:text-gray-400">
+                            {matchState.isSessionActive
+                                ? 'Jogo em andamento'
+                                : (step === 'selection' ? `${selectedIds.length} selecionados` : 'Times definidos')
+                            }
                         </Text>
                     </View>
 
-                    {step === 'selection' ? (
-                        <TouchableOpacity
-                            onPress={toggleSelectAll}
-                            className="px-4 py-2 bg-gray-200 rounded-lg active:bg-gray-300"
-                        >
-                            <Text className="text-sm font-bold text-gray-700">
-                                {selectedIds.length === players.length ? 'Limpar' : 'Todos'}
-                            </Text>
-                        </TouchableOpacity>
-                    ) : (
-                        <TouchableOpacity onPress={reset} className="bg-gray-200 p-2 rounded-full">
-                            <MaterialCommunityIcons name="refresh" size={24} color="#374151" />
+                    {matchState.isSessionActive && (
+                        <TouchableOpacity onPress={handleFinishDay} className="bg-red-100 dark:bg-red-900/30 p-2 rounded-full border border-red-200 dark:border-red-800">
+                            <MaterialCommunityIcons name="flag-checkered" size={24} color="#dc2626" />
                         </TouchableOpacity>
                     )}
                 </View>
 
-                {/* --- MODO SELEÇÃO --- */}
-                {step === 'selection' && (
+                {matchState.isSessionActive ? (
+                    <View className="flex-1 justify-center items-center pb-20">
+                        <MaterialCommunityIcons name="soccer-field" size={80} color={activeTheme === 'dark' ? '#22c55e' : '#16a34a'} style={{ opacity: 0.8 }} />
+
+                        <Text className="text-xl font-bold text-gray-800 dark:text-gray-100 mt-6 text-center">
+                            Já existe um baba acontecendo!
+                        </Text>
+                        <Text className="text-gray-500 dark:text-gray-400 text-center mt-2 mb-8 px-8">
+                            Você pode voltar para o placar ou finalizar o dia para sortear novos times.
+                        </Text>
+
+                        <TouchableOpacity
+                            onPress={() => router.push('/game')}
+                            className="bg-green-600 dark:bg-green-700 w-full py-4 rounded-2xl flex-row items-center justify-center shadow-lg active:bg-green-800"
+                        >
+                            <MaterialCommunityIcons name="play-circle-outline" size={32} color="white" style={{ marginRight: 10 }} />
+                            <Text className="text-white font-bold text-xl">VOLTAR PRO JOGO</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            onPress={handleFinishDay}
+                            className="mt-4 py-3"
+                        >
+                            <Text className="text-red-500 font-bold text-lg">Encerrar Baba</Text>
+                        </TouchableOpacity>
+                    </View>
+                ) : (
                     <>
-                        <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
-                            <View className="flex-col gap-3">
-                                {players.map((player) => {
-                                    const isSelected = selectedIds.includes(player.id);
-                                    return (
-                                        <TouchableOpacity
-                                            key={player.id}
-                                            onPress={() => toggleSelection(player.id)}
-                                            activeOpacity={0.7}
-                                            // AQUI ESTAVA O ERRO: Simplificamos para usar style inline na cor de fundo
-                                            className="w-full p-4 rounded-xl border flex-row items-center justify-between"
-                                            style={{
-                                                backgroundColor: isSelected ? '#f0fdf4' : '#ffffff', // green-50 ou white
-                                                borderColor: isSelected ? '#22c55e' : '#e5e7eb',     // green-500 ou gray-200
-                                            }}
-                                        >
-                                            <View className="flex-row items-center gap-4">
-                                                {/* Checkbox Visual - CORRIGIDO: Style inline para evitar crash do NativeWind */}
-                                                <View
+                        {step === 'selection' ? (
+                            <>
+                                <View className="flex-row justify-end mb-2">
+                                    <TouchableOpacity
+                                        onPress={toggleSelectAll}
+                                        className="px-4 py-2 bg-gray-200 dark:bg-gray-800 rounded-lg"
+                                    >
+                                        <Text className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                                            {selectedIds.length === players.length ? 'Limpar' : 'Todos'}
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
+
+                                <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+                                    <View className="flex-col gap-3">
+                                        {players.map((player) => {
+                                            const isSelected = selectedIds.includes(player.id);
+                                            return (
+                                                <TouchableOpacity
+                                                    key={player.id}
+                                                    onPress={() => toggleSelection(player.id)}
+                                                    activeOpacity={0.7}
+                                                    className="w-full p-4 rounded-xl border flex-row items-center justify-between"
                                                     style={{
-                                                        width: 32,
-                                                        height: 32,
-                                                        borderRadius: 16,
-                                                        borderWidth: 2,
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        backgroundColor: isSelected ? '#22c55e' : '#f9fafb',
-                                                        borderColor: isSelected ? '#22c55e' : '#d1d5db'
+                                                        // Precisamos usar cores condicionais no style para garantir contraste
+                                                        backgroundColor: isSelected
+                                                            ? (activeTheme === 'dark' ? '#064e3b' : '#f0fdf4') // green-900 vs green-50
+                                                            : (activeTheme === 'dark' ? '#1f2937' : '#ffffff'), // gray-800 vs white
+                                                        borderColor: isSelected
+                                                            ? '#22c55e'
+                                                            : (activeTheme === 'dark' ? '#374151' : '#e5e7eb'), // gray-700 vs gray-200
                                                     }}
                                                 >
-                                                    {isSelected && <MaterialCommunityIcons name="check" size={20} color="white" />}
-                                                </View>
+                                                    <View className="flex-row items-center gap-4">
+                                                        <View
+                                                            style={{
+                                                                width: 32, height: 32, borderRadius: 16, borderWidth: 2, alignItems: 'center', justifyContent: 'center',
+                                                                backgroundColor: isSelected ? '#22c55e' : (activeTheme === 'dark' ? '#374151' : '#f9fafb'),
+                                                                borderColor: isSelected ? '#22c55e' : (activeTheme === 'dark' ? '#4b5563' : '#d1d5db')
+                                                            }}
+                                                        >
+                                                            {isSelected && <MaterialCommunityIcons name="check" size={20} color="white" />}
+                                                        </View>
+                                                        <View>
+                                                            <Text className="text-lg font-bold" style={{ color: isSelected ? (activeTheme === 'dark' ? '#f0fdf4' : '#14532d') : (activeTheme === 'dark' ? '#f3f4f6' : '#1f2937') }}>
+                                                                {player.name}
+                                                            </Text>
+                                                            <Text className="text-sm text-gray-500 dark:text-gray-400">
+                                                                {player.position} • Nível {player.skillLevel}
+                                                            </Text>
+                                                        </View>
+                                                    </View>
+                                                </TouchableOpacity>
+                                            );
+                                        })}
+                                    </View>
+                                </ScrollView>
 
-                                                <View>
-                                                    <Text
-                                                        className="text-lg font-bold"
-                                                        style={{ color: isSelected ? '#14532d' : '#1f2937' }}
-                                                    >
-                                                        {player.name}
-                                                    </Text>
-                                                    <Text className="text-sm text-gray-500">
-                                                        {player.position} • Nível {player.skillLevel}
-                                                    </Text>
-                                                </View>
-                                            </View>
+                                <View className="absolute bottom-4 left-4 right-4">
+                                    <TouchableOpacity
+                                        onPress={handleSort}
+                                        className="bg-green-600 dark:bg-green-700 h-16 rounded-2xl flex-row items-center justify-center shadow-xl active:bg-green-800 elevation-5"
+                                    >
+                                        <MaterialCommunityIcons name="whistle" size={28} color="white" style={{marginRight: 12}} />
+                                        <Text className="text-white font-bold text-xl tracking-wide">SORTEAR TIMES</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </>
+                        ) : (
+                            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+                                {generatedTeams.map((team) => (
+                                    <TeamList key={team.id} team={team} />
+                                ))}
 
-                                            <MaterialCommunityIcons
-                                                name={player.position?.toLowerCase().includes('goleiro') ? 'hand-back-left' : 'soccer'}
-                                                size={24}
-                                                color={isSelected ? '#15803d' : '#9ca3af'}
-                                                style={{ opacity: 0.5 }}
-                                            />
-                                        </TouchableOpacity>
-                                    );
-                                })}
-                            </View>
-                        </ScrollView>
+                                <View className="flex-row gap-3 mt-4 mb-8">
+                                    <TouchableOpacity
+                                        onPress={reset}
+                                        className="flex-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 py-4 rounded-xl items-center shadow-sm"
+                                    >
+                                        <Text className="text-gray-700 dark:text-gray-200 font-bold text-lg">Refazer</Text>
+                                    </TouchableOpacity>
 
-                        {/* Botão Flutuante */}
-                        <View className="absolute bottom-4 left-4 right-4">
-                            <TouchableOpacity
-                                onPress={handleSort}
-                                className="bg-green-600 h-16 rounded-2xl flex-row items-center justify-center shadow-xl active:bg-green-700 elevation-5"
-                            >
-                                <MaterialCommunityIcons name="whistle" size={28} color="white" style={{marginRight: 12}} />
-                                <Text className="text-white font-bold text-xl tracking-wide">SORTEAR TIMES</Text>
-                            </TouchableOpacity>
-                        </View>
+                                    <TouchableOpacity
+                                        onPress={handleStartMatch}
+                                        className="flex-1 bg-green-600 dark:bg-green-700 py-4 rounded-xl items-center flex-row justify-center gap-2 shadow-lg active:bg-green-800"
+                                    >
+                                        <MaterialCommunityIcons name="soccer" size={24} color="white" />
+                                        <Text className="text-white font-bold text-lg">JOGAR</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </ScrollView>
+                        )}
                     </>
                 )}
-
-                {/* --- MODO RESULTADO --- */}
-                {step === 'result' && (
-                    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-                        {generatedTeams.map((team) => (
-                            <TeamList key={team.id} team={team} />
-                        ))}
-
-                        <View className="flex-row gap-3 mt-4 mb-8">
-                            <TouchableOpacity
-                                onPress={reset}
-                                className="flex-1 bg-white border border-gray-200 py-4 rounded-xl items-center shadow-sm"
-                            >
-                                <Text className="text-gray-700 font-bold text-lg">Refazer</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                onPress={handleStartMatch}
-                                className="flex-1 bg-green-600 py-4 rounded-xl items-center flex-row justify-center gap-2 shadow-lg active:bg-green-700"
-                            >
-                                <MaterialCommunityIcons name="soccer" size={24} color="white" />
-                                <Text className="text-white font-bold text-lg">JOGAR</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </ScrollView>
-                )}
-
             </View>
         </SafeAreaView>
     );

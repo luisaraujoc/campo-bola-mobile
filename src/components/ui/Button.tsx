@@ -1,57 +1,62 @@
-import { TouchableOpacity, Text, TouchableOpacityProps, ActivityIndicator } from "react-native";
+import { TouchableOpacity, Text, ActivityIndicator, TouchableOpacityProps } from 'react-native';
 
 interface ButtonProps extends TouchableOpacityProps {
-    variant?: "default" | "outline" | "ghost" | "destructive";
-    size?: "default" | "sm" | "lg";
+    children: string;
     loading?: boolean;
+    variant?: 'primary' | 'secondary' | 'danger';
+    size?: 'sm' | 'md' | 'lg';
+    className?: string;
 }
 
 export function Button({
-                           className,
-                           variant = "default",
-                           size = "default",
-                           loading = false,
                            children,
-                           disabled,
+                           loading = false,
+                           variant = 'primary',
+                           size = 'md',
+                           className = '',
                            ...props
                        }: ButtonProps) {
 
+    // Configuração de Estilos
+    const baseStyles = "rounded-xl items-center justify-center flex-row";
+
     const variants = {
-        default: "bg-primary active:opacity-90",
-        outline: "border border-input bg-background active:bg-secondary",
-        ghost: "bg-transparent active:bg-secondary",
-        destructive: "bg-destructive active:opacity-90",
+        primary: "bg-gray-900 dark:bg-green-600", // No escuro, verde fica melhor que preto
+        secondary: "bg-gray-100 dark:bg-gray-700",
+        danger: "bg-red-500",
     };
 
     const textColors = {
-        default: "text-primary-foreground",
-        outline: "text-foreground",
-        ghost: "text-foreground",
-        destructive: "text-destructive-foreground",
+        primary: "text-white",
+        secondary: "text-gray-900 dark:text-white",
+        danger: "text-white",
     };
 
     const sizes = {
-        default: "h-12 px-4 py-2",
-        sm: "h-9 rounded-md px-3",
-        lg: "h-14 rounded-xl px-8",
+        sm: "py-2 px-3",
+        md: "py-3 px-4",
+        lg: "py-4 px-6",
+    };
+
+    const textSizes = {
+        sm: "text-sm",
+        md: "text-base",
+        lg: "text-lg",
     };
 
     return (
         <TouchableOpacity
-            className={`flex-row items-center justify-center rounded-xl ${variants[variant]} ${sizes[size]} ${disabled || loading ? 'opacity-50' : ''} ${className}`}
-            disabled={disabled || loading}
+            disabled={loading}
+            activeOpacity={0.7}
+            className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className} ${loading ? 'opacity-70' : ''}`}
             {...props}
         >
             {loading ? (
-                <ActivityIndicator color={variant === 'outline' || variant === 'ghost' ? '#000' : '#fff'} className="mr-2" />
-            ) : null}
-
-            {typeof children === 'string' ? (
-                <Text className={`font-medium ${textColors[variant]}`}>
+                <ActivityIndicator color={variant === 'secondary' ? '#000' : '#fff'} />
+            ) : (
+                <Text className={`font-bold ${textColors[variant]} ${textSizes[size]}`}>
                     {children}
                 </Text>
-            ) : (
-                children
             )}
         </TouchableOpacity>
     );

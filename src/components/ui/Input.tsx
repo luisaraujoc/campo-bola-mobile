@@ -1,10 +1,14 @@
-import { TextInput, TextInputProps } from "react-native";
+import { TextInput, TextInputProps } from 'react-native';
 
-export function Input({ className, ...props }: TextInputProps) {
+interface InputProps extends TextInputProps {
+    className?: string;
+}
+
+export function Input({ className, ...props }: InputProps) {
     return (
         <TextInput
-            className={`flex h-12 w-full rounded-xl border border-input bg-background px-3 py-2 text-base text-foreground file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus:border-green-500 ${className}`}
-            placeholderTextColor="#94a3b8"
+            className={`w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-base text-gray-900 dark:text-gray-100 ${className}`}
+            placeholderTextColor="#9ca3af" // gray-400 funciona bem nos dois
             {...props}
         />
     );
