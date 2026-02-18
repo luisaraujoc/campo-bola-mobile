@@ -4,7 +4,13 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { MatchProvider } from "@/context/MatchContext";
 import { ThemeProvider, useTheme } from "@/context/ThemeContext";
+import * as SplashScreen from 'expo-splash-screen';
 import { ThemeProvider as NavThemeProvider, DarkTheme, DefaultTheme } from '@react-navigation/native';
+
+SplashScreen.setOptions({
+    duration: 1000,
+    fade: true,
+});
 
 // Componente interno para pegar o tema e aplicar no Navigation
 function AppContent() {
