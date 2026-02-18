@@ -11,18 +11,7 @@
       "tsconfigPaths": true
     },
     "plugins": [
-      [
-        "expo-splash-screen",
-        {
-          "backgroundColor": "#66CB8A",
-          "image": "./assets/icon.png",
-          "dark": {
-            "image": "./assets/icon.png",
-            "backgroundColor": "#66CB8A"
-          },
-          "imageWidth": 200
-        }
-      ]
+      "expo-router"
     ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -42,13 +31,6 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      },
-      "package": "com.bolamurcha.baba"
-    },
-    "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "aff6905b-0918-4315-b3fd-9e5b51ad101c"
       }
     }
   }
