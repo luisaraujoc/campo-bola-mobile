@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import {View, Text, ScrollView, TouchableOpacity, Alert, ActivityIndicator} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -17,18 +17,35 @@ export default function SortearScreen() {
     const { activeTheme } = useTheme();
 
     const [players, setPlayers] = useState<Player[]>([]);
+    const [loading, setLoading] = useState(true);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [generatedTeams, setGeneratedTeams] = useState<Team[]>([]);
     const [step, setStep] = useState<'selection' | 'result'>('selection');
 
     useEffect(() => {
-        loadPlayers();
+        syncPlayers();
     }, []);
 
-    const loadPlayers = async () => {
-        const data = await playerService.getAll();
-        setPlayers(data);
+    const syncPlayers = async () => {
+        setLoading(true);
+        try {
+            const data = await playerService.getAll();
+            setPlayers(data); // Preenche a lista com a galera que veio do banco!
+        } catch (error) {
+            alert('Erro ao conectar com o servidor! Verifique se o backend está rodando.');
+        } finally {
+            setLoading(false);
+        }
     };
+
+    if (loading) {
+        return (
+            <View className="flex-1 justify-center items-center bg-gray-900">
+                <ActivityIndicator size="large" color="#16a34a" />
+                <Text className="text-white mt-4 font-bold">Sincronizando jogadores...</Text>
+            </View>
+        );
+    }
 
     const toggleSelection = (id: string) => {
         if (selectedIds.includes(id)) {

@@ -1,7 +1,6 @@
 import { Player, Team } from '@/types';
 
-const teamNames = ['Time Verde', 'Time Azul', 'Time Laranja', 'Time Roxo', 'Time Rosa'];
-const teamColors: Array<'a' | 'b' | 'c' | 'd' | 'e'> = ['a', 'b', 'c', 'd', 'e'];
+const teamNames = ['Time 1', 'Time 2', 'Time 3', 'Time 4', 'Time 5', 'Time 6'];
 
 function shuffleArray<T>(array: T[]): T[] {
     const shuffled = [...array];
@@ -22,7 +21,6 @@ function createTeam(index: number, players: Player[]): Team {
     return {
         id: `team-${Date.now()}-${index}`,
         name: teamNames[index % teamNames.length],
-        color: teamColors[index % teamColors.length],
         players,
         averageLevel: calculateAverageLevel(players),
     };

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import {useState, useCallback, useEffect} from 'react';
 import { View, Text, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -74,7 +74,7 @@ export default function JogadoresScreen() {
                             <View>
                                 <Text className="text-white font-bold text-lg">Jogo em andamento</Text>
                                 <Text className="text-green-100 text-xs font-medium">
-                                    {matchState.scoreA} x {matchState.scoreB} • {Math.floor(matchState.gameTime / 60)} min restantes
+                                    {matchState.scoreAzul} x {matchState.scoreVermelho} • {Math.floor(matchState.gameTime / 60)} min restantes
                                 </Text>
                             </View>
                         </View>

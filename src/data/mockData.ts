@@ -48,9 +48,9 @@ export const mockGameDays: GameDay[] = [];
 
 // Stats atualizados para bater com os IDs novos
 export const mockPlayerStats: PlayerStats[] = [
-    { playerId: '22', player: mockPlayers[21], totalGoals: 15, totalAssists: 8, gamesPlayed: 10, wins: 7, losses: 2, draws: 1 }, // Vini Jr
-    { playerId: '6', player: mockPlayers[5], totalGoals: 3, totalAssists: 1, gamesPlayed: 10, wins: 6, losses: 3, draws: 1 }, // Marquinhos
-    { playerId: '14', player: mockPlayers[13], totalGoals: 9, totalAssists: 10, gamesPlayed: 10, wins: 5, losses: 4, draws: 1 }, // Paquetá
-    { playerId: '1', player: mockPlayers[0], totalGoals: 0, totalAssists: 2, gamesPlayed: 10, wins: 6, losses: 3, draws: 1 }, // Alisson
-    { playerId: '23', player: mockPlayers[22], totalGoals: 12, totalAssists: 5, gamesPlayed: 9, wins: 5, losses: 3, draws: 1 }, // Rodrygo
+    { playerId: '22', player: mockPlayers[21], totalGoals: 15, totalAssists: 8, gamesPlayed: 10, wins: 7}, // Vini Jr
+    { playerId: '6', player: mockPlayers[5], totalGoals: 3, totalAssists: 1, gamesPlayed: 10, wins: 6}, // Marquinhos
+    { playerId: '14', player: mockPlayers[13], totalGoals: 9, totalAssists: 10, gamesPlayed: 10, wins: 5}, // Paquetá
+    { playerId: '1', player: mockPlayers[0], totalGoals: 0, totalAssists: 2, gamesPlayed: 10, wins: 6}, // Alisson
+    { playerId: '23', player: mockPlayers[22], totalGoals: 12, totalAssists: 5, gamesPlayed: 9, wins: 5}, // Rodrygo
 ];

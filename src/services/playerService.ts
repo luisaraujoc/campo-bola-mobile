@@ -1,43 +1,67 @@
-import {Player, PlayerStats} from "@/types";
-import {mockPlayers, mockPlayerStats} from "@/data/mockData";
+import api from './api';
+import { Player, PlayerStats } from '@/types';
+
+interface JogadorRequestDTO {
+    nome: string;
+    telefone: string;
+    apelido?: string;
+    posicao: string;
+    nivelGeral: number;
+}
 
 export const playerService = {
     getAll: async (): Promise<Player[]> => {
-        // Simulando um delay de rede (pra ficar realista)
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve(mockPlayers);
-            }, 500);
-        });
+        const response = await api.get('/jogadores');
+        return response.data.map((dto: any) => ({
+            id: dto.id,
+            name: dto.nome,
+            nickname: dto.apelido,
+            skillLevel: dto.nivelGeral || 5,
+            position: dto.posicao || 'LIN',
+            createdAt: new Date(),
+        }));
     },
 
-    create: async (data: Omit<Player, 'id' | 'createdAt'>): Promise<Player> => {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                const newPlayer: Player = {
-                    ...data,
-                    id: Math.random().toString(36).substring(7), // ID aleatório simples
-                    // @ts-ignore (Se o seu type Player não tiver createdAt, pode ignorar esta linha)
-                    createdAt: new Date(),
-                };
-
-                // Adiciona ao mock (em memória)
-                // O unshift adiciona no começo da lista
-                mockPlayers.unshift(newPlayer);
-
-                resolve(newPlayer);
-            }, 800); // Um delayzinho para parecer real
-        });
+    getById: async (id: string): Promise<Player> => {
+        const response = await api.get(`/jogadores/${id}`);
+        const dto = response.data;
+        return {
+            id: dto.id,
+            name: dto.nome,
+            nickname: dto.apelido,
+            skillLevel: dto.nivelGeral,
+            position: dto.posicao,
+            createdAt: new Date(),
+        };
     },
-
 
     getStats: async (): Promise<PlayerStats[]> => {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                // Ordena por padrão por gols
-                const sorted = [...mockPlayerStats].sort((a, b) => b.totalGoals - a.totalGoals);
-                resolve(sorted);
-            }, 500);
-        });
+        const response = await api.get('/jogadores');
+        return response.data.map((dto: any) => ({
+            playerId: dto.id,
+            player: {
+                id: dto.id,
+                name: dto.nome,
+                nickname: dto.apelido,
+                skillLevel: dto.nivelGeral,
+                position: dto.posicao,
+            },
+            totalGoals: dto.gols || 0,
+            totalAssists: dto.assistencias || 0,
+            gamesPlayed: dto.partidasJogadas || 0,
+            wins: dto.vitorias || 0,
+        }));
+    },
+
+    create: async (data: JogadorRequestDTO): Promise<void> => {
+        await api.post('/jogadores', data);
+    },
+
+    update: async (id: string, data: JogadorRequestDTO): Promise<void> => {
+        await api.put(`/jogadores/${id}`, data);
+    },
+
+    delete: async (id: string): Promise<void> => {
+        await api.delete(`/jogadores/${id}`);
     }
 };

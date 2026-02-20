@@ -31,6 +31,13 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
+      },
+      "package": "com.bolamurcha.bolamurcha"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "aff6905b-0918-4315-b3fd-9e5b51ad101c"
       }
     }
   }

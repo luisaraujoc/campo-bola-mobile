@@ -11,7 +11,7 @@ export function MatchHistoryCard({ match }: MatchHistoryCardProps) {
         day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
     });
 
-    const isDraw = match.scoreA === match.scoreB;
+    const isDraw = match.scoreAzul === match.scoreVermelho;
     // Cores adaptadas para dark mode
     const winnerColor = isDraw ? 'text-gray-600 dark:text-gray-400' : 'text-green-600 dark:text-green-400';
     const loserColor = isDraw ? 'text-gray-600 dark:text-gray-400' : 'text-gray-400 dark:text-gray-600';
@@ -34,10 +34,10 @@ export function MatchHistoryCard({ match }: MatchHistoryCardProps) {
                 {/* Time A */}
                 <View className="flex-1 items-center">
                     <Text className="font-bold text-gray-800 dark:text-gray-200 text-lg mb-1 text-center" numberOfLines={1}>
-                        {match.teamA.name}
+                        {match.teamAzul.name}
                     </Text>
-                    <Text className={`text-4xl font-black ${match.scoreA > match.scoreB ? winnerColor : match.scoreA < match.scoreB ? loserColor : 'text-gray-700 dark:text-gray-300'}`}>
-                        {match.scoreA}
+                    <Text className={`text-4xl font-black ${match.scoreAzul > match.scoreVermelho ? winnerColor : match.scoreAzul < match.scoreVermelho ? loserColor : 'text-gray-700 dark:text-gray-300'}`}>
+                        {match.scoreAzul}
                     </Text>
                 </View>
 
@@ -46,10 +46,10 @@ export function MatchHistoryCard({ match }: MatchHistoryCardProps) {
                 {/* Time B */}
                 <View className="flex-1 items-center">
                     <Text className="font-bold text-gray-800 dark:text-gray-200 text-lg mb-1 text-center" numberOfLines={1}>
-                        {match.teamB.name}
+                        {match.teamVermelho.name}
                     </Text>
-                    <Text className={`text-4xl font-black ${match.scoreB > match.scoreA ? winnerColor : match.scoreB < match.scoreA ? loserColor : 'text-gray-700 dark:text-gray-300'}`}>
-                        {match.scoreB}
+                    <Text className={`text-4xl font-black ${match.scoreVermelho > match.scoreAzul ? winnerColor : match.scoreVermelho < match.scoreAzul ? loserColor : 'text-gray-700 dark:text-gray-300'}`}>
+                        {match.scoreVermelho}
                     </Text>
                 </View>
             </View>

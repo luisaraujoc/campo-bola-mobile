@@ -1,4 +1,4 @@
-import { View, Text, FlatList } from 'react-native';
+import { View, Text } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Team } from '@/types';
 
@@ -28,7 +28,7 @@ export function TeamList({ team }: TeamListProps) {
                         <MaterialCommunityIcons
                             name="tshirt-crew-outline"
                             size={20}
-                            color={team.color === 'a' ? '#16a34a' : '#2563eb'}
+                            color="#9ca3af" /* Cor neutra (gray-400) já que os times ainda não estão em campo */
                             style={{ marginRight: 12 }}
                         />
                         <View className="flex-1">

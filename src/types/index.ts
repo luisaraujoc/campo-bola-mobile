@@ -19,7 +19,6 @@ export interface Player {
 export interface Team {
     id: string;
     name: string;
-    color: 'a' | 'b' | 'c' | 'd' | 'e';
     players: Player[];
     averageLevel: number;
 }
@@ -28,18 +27,20 @@ export interface Goal {
     id: string;
     playerId: string;
     assistPlayerId?: string;
-    minute?: number;
+    minute: number;
+    timeColete: 'AZUL' | 'VERMELHO';
 }
 
 export interface Match {
     id: string;
-    teamA: Team;
-    teamB: Team;
-    scoreA: number;
-    scoreB: number;
+    teamAzul: Team;
+    teamVermelho: Team;
+    scoreAzul: number;
+    scoreVermelho: number;
     goals: Goal[];
     status: 'pending' | 'ongoing' | 'finished';
     createdAt: Date;
+    drawWinner?: 'AZUL' | 'VERMELHO';
 }
 
 export interface GameDay {
@@ -60,6 +61,4 @@ export interface PlayerStats {
     totalAssists: number;
     gamesPlayed: number;
     wins: number;
-    losses: number;
-    draws: number;
 }
